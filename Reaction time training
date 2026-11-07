@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reaction Time Trainer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .active-screen {
+            display: flex;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #2196F3;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #aaaaaa;
+            margin-bottom: 30px;
+        }
+
+        .menu-btn {
+            width: 80%;
+            max-width: 280px;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+            transition: transform 0.1s;
+        }
+
+        .menu-btn:active {
+            transform: scale(0.96);
+        }
+
+        .exit-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 8px 16px;
+            background-color: #e53935;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 20;
+        }
+
+        .hud {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            text-align: right;
+            z-index: 20;
+        }
+
+        .hud div {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .score-val { color: #4CAF50; }
+        .timer-val { color: #FFC107; }
+
+        /* Pro Popup Banner */
+        #proPopup {
+            position: absolute;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 215, 0, 0.9);
+            color: #121212;
+            padding: 12px 24px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            display: none;
+            z-index: 100;
+            text-align: center;
+        }
+
+        /* Game Over Screen Box */
+        .game-over-box {
+            background: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid #4CAF50;
+            max-width: 320px;
+            width: 100%;
+        }
+
+        .game-over-box h2 {
+            color: #4CAF50;
+            margin-top: 0;
+            font-size: 1.8rem;
+        }
+
+        .trophy-icon {
+            font-size: 3rem;
+            margin: 10px 0;
+        }
+
+        /* Game Elements */
+        #movingSquare {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: #ffffff;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.9);
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 10;
+            display: none;
+        }
+
+        #popSquare {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-color: #4CAF50;
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
+            border-radius: 6px;
+            cursor: pointer;
+            z-index: 10;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Pro Notification Popup -->
+    <div id="proPopup">🏆 PRO RANKED! 🏆</div>
+
+    <!-- Dashboard Screen -->
+    <div id="dashboardScreen" class="screen active-screen">
+        <h1>Reaction Time Trainer</h1>
+        <p>Sharpen your reflex speed</p>
+        <button class="menu-btn" onclick="showScreen('modeScreen')">PLAY</button>
+    </div>
+
+    <!-- Mode Selection Screen -->
+    <div id="modeScreen" class="screen">
+        <h1>Select Mode</h1>
+        <button class="menu-btn" onclick="startOption1()">Option 1: Moving Square</button>
+        <button class="menu-btn" onclick="startOption2()">Option 2: Pop-up Green Square</button>
+        <button class="menu-btn" style="background-color: #555;" onclick="showScreen('dashboardScreen')">Back to Dashboard</button>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" class="screen">
+        <div class="game-over-box">
+            <h2>Time's Up!</h2>
+            <div class="trophy-icon">🏆</div>
+            <p>You are a pro at RTT!</p>
+            <p style="font-size: 1.2rem; color: #fff; margin-bottom: 20px;">Final Score: <span id="finalScore" style="color: #4CAF50; font-weight: bold;">0</span></p>
+            <button class="menu-btn" style="width: 100%; margin: 0;" onclick="showScreen('dashboardScreen')">Main Menu</button>
+        </div>
+    </div>
+
+    <!-- Gameplay Area -->
+    <button id="exitBtn" class="exit-btn" style="display:none;" onclick="exitToDashboard()">Dashboard</button>
+    
+    <div id="gameHud" class="hud" style="display:none;">
+        <div>Score: <span id="scoreText" class="score-val">0</span></div>
+        <div>Time: <span id="timerText" class="timer-val">60s</span></div>
+    </div>
+
+    <div id="movingSquare"></div>
+    <div id="popSquare"></div>
+
+    <script>
+        let score = 0;
+        let timeLeft = 60;
+        let gameInterval = null;
+        let animFrameId = null;
+        let popTimeout = null;
+        let proTriggered = false;
+
+        const dashboardScreen = document.getElementById('dashboardScreen');
+        const modeScreen = document.getElementById('modeScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const exitBtn = document.getElementById('exitBtn');
+        const gameHud = document.getElementById('gameHud');
+        const scoreText = document.getElementById('scoreText');
+        const timerText = document.getElementById('timerText');
+        const finalScore = document.getElementById('finalScore');
+        const proPopup = document.getElementById('proPopup');
+        const movingSquare = document.getElementById('movingSquare');
+        const popSquare = document.getElementById('popSquare');
+
+        function showScreen(screenId) {
+            dashboardScreen.classList.remove('active-screen');
+            modeScreen.classList.remove('active-screen');
+            gameOverScreen.classList.remove('active-screen');
+            document.getElementById(screenId).classList.add('active-screen');
+            
+            if(screenId === 'dashboardScreen') {
+                stopActiveGame();
+            }
+        }
+
+        function stopActiveGame() {
+            clearInterval(gameInterval);
+            cancelAnimationFrame(animFrameId);
+            clearTimeout(popTimeout);
+            movingSquare.style.display = 'none';
+            popSquare.style.display = 'none';
+            exitBtn.style.display = 'none';
+            gameHud.style.display = 'none';
+        }
+
+        function resetGameVars() {
+            score = 0;
+            timeLeft = 60;
+            proTriggered = false;
+            scoreText.textContent = score;
+            timerText.textContent = timeLeft + 's';
+            proPopup.style.display = 'none';
+            stopActiveGame();
+        }
+
+        function checkMilestones() {
+            if (score >= 25 && !proTriggered) {
+                proTriggered = true;
+                proPopup.style.display = 'block';
+                setTimeout(() => {
+                    proPopup.style.display = 'none';
+                }, 4000);
+            }
+        }
+
+        function startTimer() {
+            gameInterval = setInterval(() => {
+                timeLeft--;
+                timerText.textContent = timeLeft + 's';
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            // Stop game engine loops first before wiping vars
+            clearInterval(gameInterval);
+            cancelAnimationFrame(animFrameId);
+            clearTimeout(popTimeout);
+            movingSquare.style.display = 'none';
+            popSquare.style.display = 'none';
+            exitBtn.style.display = 'none';
+            gameHud.style.display = 'none';
+
+            // Pass final score safely to screen view
+            finalScore.textContent = score;
+            dashboardScreen.classList.remove('active-screen');
+            modeScreen.classList.remove('active-screen');
+            gameOverScreen.classList.add('active-screen');
+        }
+
+        function exitToDashboard() {
+            resetGameVars();
+            showScreen('dashboardScreen');
+        }
+
+        function initGameLayout() {
+            dashboardScreen.classList.remove('active-screen');
+            modeScreen.classList.remove('active-screen');
+            gameOverScreen.classList.remove('active-screen');
+            exitBtn.style.display = 'block';
+            gameHud.style.display = 'block';
+            resetGameVars();
+            startTimer();
+        }
+
+        // --- OPTION 1: MOVING SQUARE ---
+        let posX = 100, posY = 100;
+        let speedX = 4, speedY = 4;
+
+        function startOption1() {
+            initGameLayout();
+            movingSquare.style.display = 'block';
+            posX = 100; posY = 100;
+            speedX = 4; speedY = 4;
+            animateMovingSquare();
+        }
+
+        function animateMovingSquare() {
+            if (timeLeft <= 0) return;
+            const sWidth = movingSquare.clientWidth;
+            const sHeight = movingSquare.clientHeight;
+            const wWidth = window.innerWidth;
+            const wHeight = window.innerHeight;
+
+            posX += speedX;
+            posY += speedY;
+
+            let hitEdge = false;
+            if (posX + sWidth >= wWidth || posX <= 0) {
+                speedX = -speedX;
+                hitEdge = true;
+            }
+            if (posY + sHeight >= wHeight || posY <= 0) {
+                speedY = -speedY;
+                hitEdge = true;
+            }
+
+            if (hitEdge) {
+                speedX += (Math.random() - 0.5) * 2;
+                speedY += (Math.random() - 0.5) * 2;
+            }
+
+            movingSquare.style.left = posX + 'px';
+            movingSquare.style.top = posY + 'px';
+
+            animFrameId = requestAnimationFrame(animateMovingSquare);
+        }
+
+        function tapMovingSquare() {
+            if (timeLeft <= 0) return;
+            score += 1;
+            scoreText.textContent = score;
+            checkMilestones();
+        }
+
+        movingSquare.addEventListener('mousedown', tapMovingSquare);
+        movingSquare.addEventListener('touchstart', (e) => { e.preventDefault(); tapMovingSquare(); });
+
+        // --- OPTION 2: POP-UP GREEN SQUARE ---
+        function startOption2() {
+            initGameLayout();
+            spawnGreenSquare();
+        }
+
+        function spawnGreenSquare() {
+            if (timeLeft <= 0) return;
+
+            const wWidth = window.innerWidth - 80;
+            const wHeight = window.innerHeight - 80;
+            const randomX = Math.floor(Math.random() * wWidth) + 20;
+            const randomY = Math.floor(Math.random() * (wHeight - 100)) + 80;
+
+            popSquare.style.left = randomX + 'px';
+            popSquare.style.top = randomY + 'px';
+            popSquare.style.display = 'block';
+
+            popTimeout = setTimeout(() => {
+                popSquare.style.display = 'none';
+                if (timeLeft > 0) {
+                    popTimeout = setTimeout(spawnGreenSquare, 500);
+                }
+            }, 2000);
+        }
+
+        function tapGreenSquare() {
+            if (timeLeft <= 0) return;
+            clearTimeout(popTimeout);
+            popSquare.style.display = 'none';
+            score += 3;
+            scoreText.textContent = score;
+            checkMilestones();
+            if (timeLeft > 0) {
+                popTimeout = setTimeout(spawnGreenSquare, 500);
+            }
+        }
+
+        popSquare.addEventListener('mousedown', tapGreenSquare);
+        popSquare.addEventListener('touchstart', (e) => { e.preventDefault(); tapGreenSquare(); });
+    </script>
+</body>
+</html>
